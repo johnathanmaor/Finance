@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>ניהול כלכלי משותף</title>
+<style>
+:root {
+  --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0efe9;
+  --border: #e2e0d8; --border-strong: #c8c6bc;
+  --text: #1a1a18; --text2: #5a5a54; --text3: #9a9a92;
+  --accent: #2563eb; --accent-bg: #eff6ff; --accent-text: #1d4ed8;
+  --success: #16a34a; --success-bg: #f0fdf4; --success-text: #15803d;
+  --danger: #dc2626; --danger-bg: #fef2f2; --danger-text: #b91c1c;
+  --warning-bg: #fffbeb; --warning-text: #92400e;
+  --pro-bg: #f5f3ff; --pro-text: #6d28d9;
+  --radius: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; min-height: 100vh; }
+
+/* Login screen */
+#login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 360px; text-align: center; box-shadow: var(--shadow); }
+.login-logo { font-size: 40px; margin-bottom: 12px; }
+.login-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.login-sub { font-size: 14px; color: var(--text2); margin-bottom: 28px; line-height: 1.5; }
+.btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: 15px; font-family: inherit; cursor: pointer; transition: background .15s; }
+.btn-google:hover { background: var(--surface2); }
+.btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
+.login-note { font-size: 12px; color: var(--text3); margin-top: 16px; }
+
+/* App */
+#app-screen { display: none; }
+.app-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 16px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.app-title { font-size: 15px; font-weight: 600; }
+.app-sub { font-size: 11px; color: var(--text3); }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.user-avatar { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); }
+.sync-badge { font-size: 11px; color: var(--text3); }
+.sync-badge.saving { color: var(--accent); }
+.sync-badge.saved { color: var(--success); }
+.sync-badge.error { color: var(--danger); }
+.btn-signout { font-size: 12px; color: var(--text3); border: none; background: none; cursor: pointer; font-family: inherit; padding: 4px 8px; border-radius: var(--radius); }
+.btn-signout:hover { background: var(--surface2); color: var(--text); }
+
+.nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.nav::-webkit-scrollbar { display: none; }
+.nav-btn { padding: 10px 14px; font-size: 13px; color: var(--text2); border: none; background: none; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; font-family: inherit; flex-shrink: 0; }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+.page { display: none; padding: 16px; max-width: 680px; margin: 0 auto; }
+.page.active { display: block; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.card-dashed { background: var(--surface2); border: 1px dashed var(--border-strong); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+
+.form-row { margin-bottom: 10px; }
+.form-row label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+input[type=text], input[type=number], input[type=date], input[type=month], select, textarea {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius);
+  font-size: 15px; font-family: inherit; background: var(--surface); color: var(--text);
+  appearance: none; -webkit-appearance: none; direction: rtl;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+textarea { resize: vertical; min-height: 70px; }
+
+.seg { display: flex; border: 1px solid var(--border-strong); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+.seg-btn { flex: 1; padding: 8px; font-size: 13px; border: none; background: var(--surface2); color: var(--text2); cursor: pointer; font-family: inherit; }
+.seg-btn.active { background: var(--accent-bg); color: var(--accent-text); font-weight: 500; }
+
+.split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.split-opt { padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; text-align: center; cursor: pointer; color: var(--text2); background: var(--surface); transition: all .15s; }
+.split-opt.selected { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); font-weight: 500; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px; border-radius: var(--radius); font-size: 14px; font-family: inherit; cursor: pointer; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); transition: background .15s; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-full { width: 100%; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.btn-danger-text { background: none; border: none; color: var(--danger); font-size: 12px; padding: 2px 6px; cursor: pointer; font-family: inherit; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.badge-home { background: var(--accent-bg); color: var(--accent-text); }
+.badge-kids { background: var(--success-bg); color: var(--success-text); }
+.badge-personal { background: var(--warning-bg); color: var(--warning-text); }
+.badge-income { background: var(--pro-bg); color: var(--pro-text); }
+.badge-alimony { background: #fdf4ff; color: #7e22ce; }
+
+.record-item { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.record-item:last-child { border-bottom: none; }
+.rec-info { flex: 1; min-width: 0; }
+.rec-name { font-size: 14px; font-weight: 500; }
+.rec-meta { font-size: 12px; color: var(--text3); margin-top: 3px; }
+.rec-amount { text-align: left; flex-shrink: 0; }
+.rec-total { font-size: 15px; font-weight: 600; }
+.rec-share { font-size: 11px; color: var(--text3); }
+
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.metric { background: var(--surface2); border-radius: var(--radius); padding: 12px; }
+.metric-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.metric-value { font-size: 20px; font-weight: 600; }
+.metric-value.pos { color: var(--success); }
+.metric-value.neg { color: var(--danger); }
+
+.balance-big { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.balance-big.owed { color: var(--success); }
+.balance-big.owe { color: var(--danger); }
+.balance-big.even { color: var(--text); }
+
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.filter-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; font-family: inherit; }
+.filter-chip.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); }
+
+.export-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; font-size: 13px; font-family: monospace; white-space: pre-wrap; line-height: 1.7; max-height: 320px; overflow-y: auto; direction: rtl; margin-bottom: 10px; }
+
+.alimony-month { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.alimony-month:last-child { border-bottom: none; }
+.alimony-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px; }
+
+.timeline-bar { background: var(--border); border-radius: 6px; height: 10px; overflow: hidden; margin: 8px 0; }
+.timeline-fill { height: 100%; background: linear-gradient(to left, var(--accent), #60a5fa); border-radius: 6px; }
+.milestone { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+.milestone:last-child { border-bottom: none; }
+.ms-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.ms-dot.past { background: var(--success); }
+.ms-dot.now { background: var(--accent); }
+.ms-dot.future { background: var(--border-strong); }
+
+.roadmap-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.roadmap-item:last-child { border-bottom: none; }
+.rm-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.rm-dot.done { background: var(--success); }
+.rm-dot.active-dot { background: var(--accent); }
+.rm-dot.future { background: var(--border-strong); }
+.rm-status.done { color: var(--success); font-size: 11px; margin-top: 4px; }
+.rm-status.active { color: var(--accent); font-size: 11px; margin-top: 4px; }
+.rm-status.future { color: var(--text3); font-size: 11px; margin-top: 4px; }
+
+.section-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text3); font-size: 14px; }
+
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--surface); border-radius: 16px; padding: 20px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 12px; color: var(--text2); font-size: 14px; }
+
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+  .balance-big { font-size: 20px; }
+  .metrics { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">💰</div>
+    <div class="login-title">ניהול כלכלי משותף</div>
+    <div class="login-sub">מעקב הוצאות, מזונות וציר זמן — גישה מכל מכשיר, לשניכם</div>
+    <button class="btn-google" onclick="signIn()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      כניסה עם Google
+    </button>
+    <div class="login-note">הנתונים שמורים בענן ומסונכרנים בין המכשירים</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="app-header">
+    <div>
+      <div class="app-title">ניהול כלכלי</div>
+      <div class="app-sub">תקופת מעבר ואחריה</div>
+    </div>
+    <div class="header-right">
+      <span class="sync-badge" id="sync-status"></span>
+      <img class="user-avatar" id="user-avatar" src="" alt="" style="display:none"/>
+      <button class="btn-signout" onclick="signOut()">יציאה</button>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="goTo('add')">+ הוסף</button>
+    <button class="nav-btn" onclick="goTo('list')">רשימה</button>
+    <button class="nav-btn" onclick="goTo('balance')">התחשבנות</button>
+    <button class="nav-btn" onclick="goTo('alimony')">מזונות</button>
+    <button class="nav-btn" onclick="goTo('timeline')">ציר זמן</button>
+    <button class="nav-btn" onclick="goTo('export')">ייצוא</button>
+    <button class="nav-btn" onclick="goTo('settings')">⚙</button>
+  </nav>
+
+  <!-- ADD -->
+  <div id="page-add" class="page active">
+    <div class="seg">
+      <button class="seg-btn active" onclick="setMode('expense',this)">הוצאה</button>
+      <button class="seg-btn" onclick="setMode('income',this)">הכנסה</button>
+    </div>
+    <div class="card" id="form-expense">
+      <div class="form-row"><label>תיאור</label><input type="text" id="e-desc" placeholder="לדוגמה: ארנונה יוני"/></div>
+      <div class="form-row"><label>סכום (₪)</label><input type="number" id="e-amount" placeholder="0" min="0" step="0.01"/></div>
+      <div class="form-row"><label>תאריך</label><input type="date" id="e-date"/></div>
+      <div class="form-row"><label>מי שילם</label>
+        <select id="e-payer"><option value="me">אני שילמתי</option><option value="her">היא שילמה</option></select>
+      </div>
+      <div class="form-row"><label>קטגוריה</label>
+        <select id="e-cat" onchange="onCatChange()">
+          <option value="home">🏠 הוצאות בית</option>
+          <option value="kids">👶 ילדים</option>
+          <option value="personal">👤 אישי</option>
+        </select>
+      </div>
+      <div id="split-wrap" class="form-row">
+        <label>חלוקה</label>
+        <div class="split-grid">
+          <div class="split-opt selected" onclick="selSplit('50')" id="sp-50">50% / 50%</div>
+          <div class="split-opt" onclick="selSplit('me70')" id="sp-me70">70% עלי</div>
+          <div class="split-opt" onclick="selSplit('her70')" id="sp-her70">70% עליה</div>
+          <div class="split-opt" onclick="selSplit('me100')" id="sp-me100">כולו עלי</div>
+        </div>
+      </div>
+      <div class="form-row"><label>הערה</label><textarea id="e-note" placeholder="אופציונלי..."></textarea></div>
+      <button class="btn btn-primary btn-full" onclick="addExpense()">הוסף הוצאה</button>
+    </div>
+    <div class="card" id="form-income" style="display:none">
+      <div class="form-row"><label>תיאור</label><input type="text" id="i-desc" placeholder="לדוגמה: משכורת יוני"/></div>
+      <div class="form-row"><label>סכום (₪)</label><input type="number" id="i-amount" placeholder="0" min="0" step="0.01"/></div>
+      <div class="form-row"><label>תאריך</label><input type="date" id="i-date"/></div>
+      <div class="form-row"><label>של מי</label>
+        <select id="i-owner"><option value="me">שלי</option><option value="her">שלה</option><option value="shared">משותף</option></select>
+      </div>
+      <div class="form-row"><label>סוג</label>
+        <select id="i-type"><option value="salary">משכורת</option><option value="rent">שכר דירה</option><option value="freelance">פרילנס</option><option value="other">אחר</option></select>
+      </div>
+      <div class="form-row"><label>הערה</label><textarea id="i-note" placeholder="אופציונלי..."></textarea></div>
+      <button class="btn btn-primary btn-full" onclick="addIncome()">הוסף הכנסה</button>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div id="page-list" class="page">
+    <div class="filters">
+      <button class="filter-chip active" onclick="setFilter('all',this)">הכל</button>
+      <button class="filter-chip" onclick="setFilter('home',this)">🏠 בית</button>
+      <button class="filter-chip" onclick="setFilter('kids',this)">👶 ילדים</button>
+      <button class="filter-chip" onclick="setFilter('personal',this)">👤 אישי</button>
+      <button class="filter-chip" onclick="setFilter('income',this)">💰 הכנסות</button>
+    </div>
+    <div id="list-content"></div>
+  </div>
+
+  <!-- BALANCE -->
+  <div id="page-balance" class="page">
+    <div id="balance-content"></div>
+  </div>
+
+  <!-- ALIMONY -->
+  <div id="page-alimony" class="page">
+    <div class="card">
+      <div class="section-title">הגדרת מזונות</div>
+      <div class="form-row"><label>סכום מזונות חודשי (₪)</label><input type="number" id="al-amount" placeholder="0"/></div>
+      <div class="form-row"><label>יום תשלום קבוע</label>
+        <select id="al-day"><option value="1">1 לחודש</option><option value="5">5 לחודש</option><option value="10" selected>10 לחודש</option><option value="15">15 לחודש</option><option value="20">20 לחודש</option></select>
+      </div>
+      <div class="form-row"><label>מי משלם</label>
+        <select id="al-payer"><option value="me">אני משלם</option><option value="her">היא משלמת</option></select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="saveAlimonySettings()">שמור הגדרות</button>
+    </div>
+    <div class="card">
+      <div class="section-title">מעקב תשלומים</div>
+      <div id="alimony-tracker"></div>
+      <button class="btn btn-sm" style="margin-top:10px" onclick="openAddPayment()">+ רשום תשלום ידני</button>
+    </div>
+    <div class="card">
+      <div class="section-title">הוצאות חד"פ לילדים</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">הוצאות חריגות מעבר למזונות</p>
+      <div id="onetime-list"></div>
+      <button class="btn btn-sm btn-full" style="margin-top:10px" onclick="openOnetimeModal()">+ הוצאה חד"פ</button>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div id="page-timeline" class="page">
+    <div class="card">
+      <div class="section-title">פרטי הבת הקטנה</div>
+      <div class="form-row"><label>שם</label><input type="text" id="tl-name" placeholder="שם הבת הקטנה"/></div>
+      <div class="form-row"><label>תאריך לידה</label><input type="date" id="tl-dob"/></div>
+      <button class="btn btn-primary btn-full" onclick="saveTimeline()">עדכן</button>
+    </div>
+    <div id="timeline-display"></div>
+  </div>
+
+  <!-- EXPORT -->
+  <div id="page-export" class="page">
+    <div class="card">
+      <div class="section-title">ייצוא חודשי</div>
+      <div class="form-row"><label>בחר חודש</label><select id="exp-month" onchange="generateExport()"></select></div>
+      <div id="export-preview" class="export-box">בחר חודש לצפייה</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="copyExport()">העתק</button>
+        <button class="btn btn-sm" onclick="shareExport()">שתף</button>
+        <button class="btn btn-sm" onclick="downloadExport()">הורד</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="card">
+      <div class="section-title">הגדרות כלליות</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div class="form-row" style="flex:1;margin:0"><label>השם שלך</label><input type="text" id="set-myname" placeholder="יונתן"/></div>
+        <div class="form-row" style="flex:1;margin:0"><label>שמה</label><input type="text" id="set-hername" placeholder="..."/></div>
+      </div>
+      <div class="form-row"><label>תאריך פרידה צפוי</label><input type="date" id="set-separation"/></div>
+      <button class="btn btn-primary btn-full" onclick="saveSettings()">שמור</button>
+    </div>
+    <div class="card">
+      <div class="section-title">חשבון</div>
+      <div id="user-info-display" style="font-size:14px;color:var(--text2);margin-bottom:12px"></div>
+      <button class="btn btn-sm" onclick="signOut()">יציאה מהחשבון</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-payment">
+  <div class="modal">
+    <div class="modal-title">רישום תשלום מזונות</div>
+    <div class="form-row"><label>חודש</label><input type="month" id="pay-month"/></div>
+    <div class="form-row"><label>סכום (₪)</label><input type="number" id="pay-amount" placeholder="0"/></div>
+    <div class="form-row"><label>תאריך תשלום</label><input type="date" id="pay-date"/></div>
+    <div class="form-row"><label>הערה</label><input type="text" id="pay-note" placeholder="אופציונלי"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="savePayment()">שמור</button>
+      <button class="btn" onclick="closeModal('modal-payment')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-onetime">
+  <div class="modal">
+    <div class="modal-title">הוצאה חד"פ לילדים</div>
+    <div class="form-row"><label>תיאור</label><input type="text" id="ot-desc" placeholder="לדוגמה: חופשת קיץ"/></div>
+    <div class="form-row"><label>סכום (₪)</label><input type="number" id="ot-amount" placeholder="0"/></div>
+    <div class="form-row"><label>תאריך</label><input type="date" id="ot-date"/></div>
+    <div class="form-row"><label>חלוקה</label>
+      <select id="ot-split"><option value="50">50% / 50%</option><option value="me100">כולו עלי</option><option value="her100">כולו עליה</option><option value="me70">70% עלי</option><option value="her70">70% עליה</option></select>
+    </div>
+    <div class="form-row"><label>מי שילם</label>
+      <select id="ot-payer"><option value="me">אני שילמתי</option><option value="her">היא שילמה</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="saveOnetime()">שמור</button>
+      <button class="btn" onclick="closeModal('modal-onetime')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyANekbYbsstBnp6JVWMGAgKq8SdiOtQF1M",
+  authDomain: "jonathan-and-galit-s-finances.firebaseapp.com",
+  projectId: "jonathan-and-galit-s-finances",
+  storageBucket: "jonathan-and-galit-s-finances.firebasestorage.app",
+  messagingSenderId: "207461896561",
+  appId: "1:207461896561:web:2001f1d57d3460ff93a6d0"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// ── State ──────────────────────────────────────────────
+let records = [];
+let alimony = { amount: 0, day: 10, payer: 'me', payments: {} };
+let onetime = [];
+let timeline = { name: '', dob: '' };
+let settings = { myname: 'יונתן', hername: 'גלית', separation: '' };
+let saveTimer = null;
+let unsubscribe = null;
+
+// ── Helpers ────────────────────────────────────────────
+const splitRatio = s => ({ '50':[.5,.5],'me70':[.7,.3],'her70':[.3,.7],'me100':[1,0],'her100':[0,1] }[s]||[.5,.5]);
+const fmt = n => Math.round(n).toLocaleString('he-IL');
+const today = () => new Date().toISOString().slice(0,10);
+const monthKey = d => d ? d.slice(0,7) : new Date().toISOString().slice(0,7);
+const heMonth = m => { if(!m)return''; const[y,mo]=m.split('-'); const n=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']; return n[parseInt(mo)-1]+' '+y; };
+const catLabel = { home:'הוצאות בית', kids:'ילדים', personal:'אישי', income:'הכנסה' };
+const catBadgeClass = { home:'badge-home', kids:'badge-kids', personal:'badge-personal', income:'badge-income' };
+const splitLabel = s => ({'50':'50/50','me70':'70% עלי','her70':'70% עליה','me100':'כולו עלי','her100':'כולו עליה'}[s]||s);
+
+// ── Sync ───────────────────────────────────────────────
+function setSyncStatus(msg, cls) {
+  const el = document.getElementById('sync-status');
+  el.textContent = msg; el.className = 'sync-badge ' + cls;
+}
+
+async function saveToCloud() {
+  if (!auth.currentUser) return;
+  setSyncStatus('שומר...', 'saving');
+  try {
+    await setDoc(doc(db, 'shared', 'data'), { records, alimony, onetime, timeline, settings, updatedAt: Date.now() });
+    setSyncStatus('מסונכרן ✓', 'saved');
+    setTimeout(() => setSyncStatus('', ''), 2000);
+  } catch(e) {
+    setSyncStatus('שגיאת שמירה', 'error');
+    console.error(e);
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToCloud, 800);
+}
+
+function listenToCloud() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = onSnapshot(doc(db, 'shared', 'data'), snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    records = d.records || [];
+    alimony = d.alimony || alimony;
+    onetime = d.onetime || [];
+    timeline = d.timeline || timeline;
+    settings = d.settings || settings;
+    applySettings();
+    refreshCurrentPage();
+    setSyncStatus('מסונכרן ✓', 'saved');
+    setTimeout(() => setSyncStatus('', ''), 1500);
+  }, err => {
+    setSyncStatus('שגיאת חיבור', 'error');
+    console.error(err);
+  });
+}
+
+// ── Auth ───────────────────────────────────────────────
+window.signIn = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch(e) { alert('הכניסה נכשלה: ' + e.message); }
+};
+
+window.signOut = async () => {
+  if (unsubscribe) unsubscribe();
+  await fbSignOut(auth);
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+};
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    const av = document.getElementById('user-avatar');
+    if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
+    document.getElementById('user-info-display').textContent = user.displayName + ' · ' + user.email;
+    listenToCloud();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-screen').style.display = 'none';
+  }
+});
+
+// ── Settings ────────────────────────────────────────────
+function applySettings() {
+  if (settings.myname) document.getElementById('set-myname').value = settings.myname;
+  if (settings.hername) document.getElementById('set-hername').value = settings.hername;
+  if (settings.separation) document.getElementById('set-separation').value = settings.separation;
+  if (alimony.amount) document.getElementById('al-amount').value = alimony.amount;
+  document.getElementById('al-day').value = alimony.day || 10;
+  document.getElementById('al-payer').value = alimony.payer || 'me';
+  if (timeline.name) document.getElementById('tl-name').value = timeline.name;
+  if (timeline.dob) document.getElementById('tl-dob').value = timeline.dob;
+}
+
+window.saveSettings = () => {
+  settings.myname = document.getElementById('set-myname').value.trim() || 'יונתן';
+  settings.hername = document.getElementById('set-hername').value.trim() || 'גלית';
+  settings.separation = document.getElementById('set-separation').value;
+  scheduleSave(); alert('נשמר ✓');
+};
+
+// ── Nav ────────────────────────────────────────────────
+let currentPage = 'add';
+window.goTo = p => {
+  currentPage = p;
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const pages = ['add','list','balance','alimony','timeline','export','settings'];
+  const idx = pages.indexOf(p);
+  if (idx >= 0) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  if (p==='list') renderList();
+  if (p==='balance') renderBalance();
+  if (p==='alimony') renderAlimony();
+  if (p==='timeline') renderTimeline();
+  if (p==='export') renderExportPage();
+};
+
+function refreshCurrentPage() {
+  if (currentPage==='list') renderList();
+  else if (currentPage==='balance') renderBalance();
+  else if (currentPage==='alimony') renderAlimony();
+  else if (currentPage==='timeline') renderTimeline();
+  else if (currentPage==='export') renderExportPage();
+}
+
+// ── Add form ────────────────────────────────────────────
+let mode = 'expense', split = '50', filter = 'all';
+
+window.setMode = (m, btn) => {
+  mode = m;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('form-expense').style.display = m==='expense'?'block':'none';
+  document.getElementById('form-income').style.display = m==='income'?'block':'none';
+};
+
+window.selSplit = v => {
+  split = v;
+  ['50','me70','her70','me100'].forEach(s => document.getElementById('sp-'+s).classList.toggle('selected', s===v));
+};
+
+window.onCatChange = () => {
+  document.getElementById('split-wrap').style.display = document.getElementById('e-cat').value==='personal'?'none':'block';
+};
+
+window.addExpense = () => {
+  const desc = document.getElementById('e-desc').value.trim();
+  const amount = parseFloat(document.getElementById('e-amount').value);
+  const date = document.getElementById('e-date').value || today();
+  const payer = document.getElementById('e-payer').value;
+  const cat = document.getElementById('e-cat').value;
+  const note = document.getElementById('e-note').value.trim();
+  if (!desc || !amount || amount<=0) { alert('יש למלא תיאור וסכום'); return; }
+  const sp = cat==='personal'?'me100':split;
+  records.push({ id: Date.now(), type:'expense', desc, amount, date, payer, cat, split:sp, note, month: monthKey(date) });
+  document.getElementById('e-desc').value='';
+  document.getElementById('e-amount').value='';
+  document.getElementById('e-note').value='';
+  scheduleSave(); goTo('list');
+};
+
+window.addIncome = () => {
+  const desc = document.getElementById('i-desc').value.trim();
+  const amount = parseFloat(document.getElementById('i-amount').value);
+  const date = document.getElementById('i-date').value || today();
+  const owner = document.getElementById('i-owner').value;
+  const itype = document.getElementById('i-type').value;
+  const note = document.getElementById('i-note').value.trim();
+  if (!desc || !amount || amount<=0) { alert('יש למלא תיאור וסכום'); return; }
+  records.push({ id: Date.now(), type:'income', desc, amount, date, owner, itype, cat:'income', note, month: monthKey(date) });
+  document.getElementById('i-desc').value='';
+  document.getElementById('i-amount').value='';
+  document.getElementById('i-note').value='';
+  scheduleSave(); goTo('list');
+};
+
+window.deleteRecord = id => {
+  if (!confirm('למחוק?')) return;
+  records = records.filter(r => r.id!==id);
+  scheduleSave(); renderList(); renderBalance();
+};
+
+// ── List ───────────────────────────────────────────────
+window.setFilter = (f, btn) => {
+  filter = f;
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); renderList();
+};
+
+function renderList() {
+  const el = document.getElementById('list-content');
+  const filtered = filter==='all' ? records : records.filter(r=>r.cat===filter);
+  if (!filtered.length) { el.innerHTML='<div class="empty-state">אין רשומות עדיין</div>'; return; }
+  const byMonth = {};
+  [...filtered].reverse().forEach(r => { (byMonth[r.month]=byMonth[r.month]||[]).push(r); });
+  el.innerHTML = Object.keys(byMonth).sort().reverse().map(m => `
+    <div class="card">
+      <div class="section-title">${heMonth(m)}</div>
+      ${byMonth[m].map(r => renderRecord(r)).join('')}
+    </div>`).join('');
+}
+
+function renderRecord(r) {
+  if (r.type==='income') {
+    const ownerLabel = r.owner==='me'?settings.myname:r.owner==='her'?settings.hername:'משותף';
+    return `<div class="record-item">
+      <div class="rec-info"><div class="rec-name">${r.desc}</div>
+      <div class="rec-meta"><span class="badge badge-income">הכנסה</span> ${r.date} · ${ownerLabel}${r.note?' · '+r.note:''}</div></div>
+      <div class="rec-amount"><div class="rec-total" style="color:var(--success)">+₪${fmt(r.amount)}</div>
+      <button class="btn-danger-text" onclick="deleteRecord(${r.id})">מחק</button></div></div>`;
+  }
+  const [myR] = splitRatio(r.split);
+  return `<div class="record-item">
+    <div class="rec-info"><div class="rec-name">${r.desc}</div>
+    <div class="rec-meta"><span class="badge ${catBadgeClass[r.cat]}">${catLabel[r.cat]}</span> ${r.date} · ${r.payer==='me'?'שילמתי':'היא שילמה'} · ${splitLabel(r.split)}${r.note?' · '+r.note:''}</div></div>
+    <div class="rec-amount"><div class="rec-total">₪${fmt(r.amount)}</div>
+    <div class="rec-share">חלקי: ₪${fmt(r.amount*myR)}</div>
+    <button class="btn-danger-text" onclick="deleteRecord(${r.id})">מחק</button></div></div>`;
+}
+
+// ── Balance ────────────────────────────────────────────
+function renderBalance() {
+  const el = document.getElementById('balance-content');
+  const exp = records.filter(r=>r.type==='expense'&&r.cat!=='personal');
+  if (!exp.length) { el.innerHTML='<div class="empty-state">הוסף הוצאות כדי לראות התחשבנות</div>'; return; }
+  let iPaid=0,shePaid=0,myShare=0,kidsT=0,homeT=0;
+  exp.forEach(e=>{const[myR]=splitRatio(e.split);myShare+=e.amount*myR;if(e.payer==='me')iPaid+=e.amount;else shePaid+=e.amount;if(e.cat==='kids')kidsT+=e.amount;if(e.cat==='home')homeT+=e.amount;});
+  const myInc=records.filter(r=>r.type==='income'&&r.owner==='me').reduce((a,r)=>a+r.amount,0);
+  const herInc=records.filter(r=>r.type==='income'&&r.owner==='her').reduce((a,r)=>a+r.amount,0);
+  const bal=iPaid-myShare;
+  let balLabel,balClass,balSub;
+  if(Math.abs(bal)<1){balLabel='מאוזן ✓';balClass='even';balSub='אין חוב בין הצדדים';}
+  else if(bal>0){balLabel=`${settings.hername} חייבת לך ₪${fmt(bal)}`;balClass='owed';balSub=`שילמת ₪${fmt(bal)} יותר ממה שחלקך`;}
+  else{balLabel=`אתה חייב ₪${fmt(Math.abs(bal))}`;balClass='owe';balSub=`${settings.hername} שילמה יותר ממה שחלקה`;}
+  const alPaid=Object.values(alimony.payments||{}).reduce((a,p)=>a+(p.amount||0),0);
+  el.innerHTML=`
+    <div class="card">
+      <div class="section-title">יתרה נוכחית — הוצאות משותפות</div>
+      <div class="balance-big ${balClass}">${balLabel}</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:16px">${balSub}</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">שילמתי</div><div class="metric-value">₪${fmt(iPaid)}</div></div>
+        <div class="metric"><div class="metric-label">${settings.hername} שילמה</div><div class="metric-value">₪${fmt(shePaid)}</div></div>
+        <div class="metric"><div class="metric-label">חלקי</div><div class="metric-value">₪${fmt(myShare)}</div></div>
+        <div class="metric"><div class="metric-label">בית</div><div class="metric-value">₪${fmt(homeT)}</div></div>
+        <div class="metric"><div class="metric-label">ילדים</div><div class="metric-value">₪${fmt(kidsT)}</div></div>
+        <div class="metric"><div class="metric-label">הכנסות שלי</div><div class="metric-value pos">₪${fmt(myInc)}</div></div>
+        <div class="metric"><div class="metric-label">הכנסות ${settings.hername}</div><div class="metric-value pos">₪${fmt(herInc)}</div></div>
+        ${alimony.amount?`<div class="metric"><div class="metric-label">מזונות שולמו</div><div class="metric-value pos">₪${fmt(alPaid)}</div></div>`:''}
+      </div>
+    </div>`;
+}
+
+// ── Alimony ────────────────────────────────────────────
+window.saveAlimonySettings = () => {
+  alimony.amount = parseFloat(document.getElementById('al-amount').value)||0;
+  alimony.day = parseInt(document.getElementById('al-day').value);
+  alimony.payer = document.getElementById('al-payer').value;
+  scheduleSave(); renderAlimony(); alert('הגדרות נשמרו ✓');
+};
+
+function renderAlimony() {
+  const el = document.getElementById('alimony-tracker');
+  const ot = document.getElementById('onetime-list');
+  if (!alimony.amount) { el.innerHTML='<div class="empty-state" style="padding:1rem">הגדר סכום מזונות למעלה</div>'; }
+  else {
+    const months=[]; const now=new Date();
+    for(let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d.toISOString().slice(0,7));}
+    el.innerHTML=months.map(m=>{
+      const p=alimony.payments[m]; const paid=p&&p.amount>0;
+      return `<div class="alimony-month">
+        <div class="alimony-header">
+          <div style="font-size:14px;font-weight:500">${heMonth(m)}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${paid?`<span style="font-size:12px;color:var(--success)">✓ ₪${fmt(p.amount)} — ${p.date||''}</span>`:`<span style="font-size:12px;color:var(--text3)">טרם שולם</span>`}
+            <button class="btn btn-sm" onclick="quickMarkPaid('${m}')" style="font-size:12px;padding:4px 10px">${paid?'עדכן':'סמן שולם'}</button>
+          </div>
+        </div>
+        ${p&&p.note?`<div style="font-size:12px;color:var(--text3)">${p.note}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+  if (!onetime.length) { ot.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">אין הוצאות חד"פ עדיין</div>'; }
+  else {
+    ot.innerHTML=onetime.map((o,i)=>{
+      const[myR]=splitRatio(o.split);
+      return `<div class="record-item">
+        <div class="rec-info"><div class="rec-name">${o.desc}</div>
+        <div class="rec-meta">${o.date} · ${splitLabel(o.split)} · ${o.payer==='me'?'שילמתי':'היא שילמה'}</div></div>
+        <div class="rec-amount"><div class="rec-total">₪${fmt(o.amount)}</div>
+        <div class="rec-share">חלקי: ₪${fmt(o.amount*myR)}</div>
+        <button class="btn-danger-text" onclick="deleteOnetime(${i})">מחק</button></div></div>`;
+    }).join('');
+  }
+}
+
+window.quickMarkPaid = m => {
+  document.getElementById('pay-month').value=m;
+  document.getElementById('pay-amount').value=alimony.amount||'';
+  document.getElementById('pay-date').value=today();
+  document.getElementById('pay-note').value='';
+  openModal('modal-payment');
+};
+window.openAddPayment = () => {
+  document.getElementById('pay-month').value=monthKey(today());
+  document.getElementById('pay-amount').value=alimony.amount||'';
+  document.getElementById('pay-date').value=today();
+  document.getElementById('pay-note').value='';
+  openModal('modal-payment');
+};
+window.savePayment = () => {
+  const month=document.getElementById('pay-month').value;
+  const amount=parseFloat(document.getElementById('pay-amount').value)||0;
+  const date=document.getElementById('pay-date').value;
+  const note=document.getElementById('pay-note').value.trim();
+  if(!month){alert('בחר חודש');return;}
+  if(!alimony.payments)alimony.payments={};
+  alimony.payments[month]={amount,date,note};
+  scheduleSave(); closeModal('modal-payment'); renderAlimony();
+};
+window.openOnetimeModal = () => {
+  document.getElementById('ot-desc').value='';
+  document.getElementById('ot-amount').value='';
+  document.getElementById('ot-date').value=today();
+  openModal('modal-onetime');
+};
+window.saveOnetime = () => {
+  const desc=document.getElementById('ot-desc').value.trim();
+  const amount=parseFloat(document.getElementById('ot-amount').value)||0;
+  const date=document.getElementById('ot-date').value||today();
+  const sp=document.getElementById('ot-split').value;
+  const payer=document.getElementById('ot-payer').value;
+  if(!desc||!amount){alert('יש למלא תיאור וסכום');return;}
+  onetime.push({id:Date.now(),desc,amount,date,split:sp,payer});
+  scheduleSave(); closeModal('modal-onetime'); renderAlimony();
+};
+window.deleteOnetime = i => {
+  if(!confirm('למחוק?'))return;
+  onetime.splice(i,1); scheduleSave(); renderAlimony();
+};
+
+// ── Timeline ────────────────────────────────────────────
+window.saveTimeline = () => {
+  timeline.name=document.getElementById('tl-name').value.trim();
+  timeline.dob=document.getElementById('tl-dob').value;
+  scheduleSave(); renderTimeline();
+};
+function renderTimeline() {
+  const el=document.getElementById('timeline-display');
+  if(!timeline.dob){el.innerHTML='<div class="empty-state">הזן תאריך לידה של הבת הקטנה</div>';return;}
+  const dob=new Date(timeline.dob);
+  const turn18=new Date(dob.getFullYear()+18,dob.getMonth(),dob.getDate());
+  const now=new Date();
+  const pct=Math.max(0,Math.min(100,((now-dob)/(turn18-dob))*100));
+  const yearsLeft=((turn18-now)/(1000*60*60*24*365.25)).toFixed(1);
+  const age=((now-dob)/(1000*60*60*24*365.25)).toFixed(1);
+  const name=timeline.name||'הבת הקטנה';
+  const sep=settings.separation?new Date(settings.separation):null;
+  const milestones=[
+    {label:'לידה',date:dob,type:'past'},
+    sep?{label:'פרידה (צפוי)',date:sep,type:now>sep?'past':'now'}:null,
+    {label:"גיל 6 — כיתה א'",date:new Date(dob.getFullYear()+6,8,1),type:new Date(dob.getFullYear()+6,8,1)<now?'past':'future'},
+    {label:'גיל 13 — בת מצווה',date:new Date(dob.getFullYear()+13,dob.getMonth(),dob.getDate()),type:new Date(dob.getFullYear()+13,dob.getMonth(),dob.getDate())<now?'past':'future'},
+    {label:'גיל 18 — סיום חובת מזונות',date:turn18,type:'future'},
+  ].filter(Boolean).sort((a,b)=>a.date-b.date);
+  el.innerHTML=`
+    <div class="card">
+      <div class="section-title">ציר זמן — ${name}</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);margin-bottom:6px">
+        <span>גיל נוכחי: <strong>${age}</strong></span><span>נותרו: <strong>${yearsLeft} שנים</strong></span>
+      </div>
+      <div class="timeline-bar"><div class="timeline-fill" style="width:${pct.toFixed(1)}%"></div></div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px">${pct.toFixed(0)}% מהדרך לגיל 18</div>
+      ${milestones.map(ms=>`<div class="milestone"><div class="ms-dot ${ms.type}"></div>
+        <div><div style="font-size:13px;font-weight:500">${ms.label}</div>
+        <div style="font-size:12px;color:var(--text3)">${ms.date.toLocaleDateString('he-IL')}</div></div></div>`).join('')}
+    </div>
+    ${alimony.amount?`<div class="card">
+      <div class="section-title">אומדן מזונות עד גיל 18</div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">תשלום חודשי</div><div class="metric-value">₪${fmt(alimony.amount)}</div></div>
+        <div class="metric"><div class="metric-label">שנים שנותרו</div><div class="metric-value">${yearsLeft}</div></div>
+        <div class="metric"><div class="metric-label">סה"כ אומדן</div><div class="metric-value">₪${fmt(alimony.amount*parseFloat(yearsLeft)*12)}</div></div>
+      </div></div>`:''}`;
+}
+
+// ── Export ─────────────────────────────────────────────
+function renderExportPage() {
+  const months=[...new Set(records.map(r=>r.month))].sort().reverse();
+  const sel=document.getElementById('exp-month');
+  const prev=sel.value;
+  sel.innerHTML=months.length?months.map(m=>`<option value="${m}">${heMonth(m)}</option>`).join(''):'<option value="">אין נתונים</option>';
+  if(prev&&months.includes(prev))sel.value=prev;
+  if(months.length)generateExport();
+}
+window.generateExport = () => {
+  const month=document.getElementById('exp-month').value;
+  if(!month){document.getElementById('export-preview').textContent='אין נתונים';return;}
+  const recs=records.filter(r=>r.month===month);
+  const exp=recs.filter(r=>r.type==='expense'&&r.cat!=='personal');
+  const inc=recs.filter(r=>r.type==='income');
+  let iPaid=0,shePaid=0,myShare=0,kidsT=0,homeT=0;
+  exp.forEach(e=>{const[m]=splitRatio(e.split);myShare+=e.amount*m;if(e.payer==='me')iPaid+=e.amount;else shePaid+=e.amount;if(e.cat==='kids')kidsT+=e.amount;if(e.cat==='home')homeT+=e.amount;});
+  const alPay=alimony.payments&&alimony.payments[month];
+  const bal=iPaid-myShare;
+  const lines=[
+    `📋 סיכום חודשי — ${heMonth(month)}`,`━━━━━━━━━━━━━━━━━━━━━━`,``,
+    `💰 הכנסות`,
+    ...(inc.length?inc.map(r=>`  ${r.desc} (${r.owner==='me'?settings.myname:r.owner==='her'?settings.hername:'משותף'}): ₪${fmt(r.amount)}`):['  —']),``,
+    `🏠 הוצאות בית (סה"כ ₪${fmt(homeT)})`,
+    ...(exp.filter(e=>e.cat==='home').length?exp.filter(e=>e.cat==='home').map(e=>`  ${e.desc}: ₪${fmt(e.amount)} | ${e.payer==='me'?'שילמתי':'היא שילמה'} | ${splitLabel(e.split)}`):['  —']),``,
+    `👶 הוצאות ילדים (סה"כ ₪${fmt(kidsT)})`,
+    ...(exp.filter(e=>e.cat==='kids').length?exp.filter(e=>e.cat==='kids').map(e=>`  ${e.desc}: ₪${fmt(e.amount)} | ${e.payer==='me'?'שילמתי':'היא שילמה'} | ${splitLabel(e.split)}`):['  —']),``,
+    alimony.amount?`💳 מזונות — ${heMonth(month)}`:null,
+    alimony.amount?(alPay?`  שולם ₪${fmt(alPay.amount)} ב-${alPay.date}${alPay.note?' | '+alPay.note:''}`:`  טרם שולם`):null,
+    alimony.amount?``:null,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `${settings.myname} שילם: ₪${fmt(iPaid)}`,`${settings.hername} שילמה: ₪${fmt(shePaid)}`,`חלקי: ₪${fmt(myShare)}`,``,
+    bal>0.5?`✅ ${settings.hername} חייבת לך: ₪${fmt(bal)}`:bal<-0.5?`🔴 אתה חייב: ₪${fmt(Math.abs(bal))}`:`✅ מאוזן`,``,
+    `נוצר: ${new Date().toLocaleDateString('he-IL')}`,
+  ].filter(l=>l!==null);
+  document.getElementById('export-preview').textContent=lines.join('\n');
+};
+window.copyExport=()=>navigator.clipboard.writeText(document.getElementById('export-preview').textContent).then(()=>alert('הועתק ✓')).catch(()=>alert('נסה ידנית'));
+window.shareExport=()=>{ const t=document.getElementById('export-preview').textContent; if(navigator.share)navigator.share({text:t});else window.copyExport(); };
+window.downloadExport=()=>{
+  const t=document.getElementById('export-preview').textContent;
+  const m=document.getElementById('exp-month').value;
+  const b=new Blob([t],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`סיכום-${m}.txt`;a.click();
+};
+
+// ── Modals ─────────────────────────────────────────────
+window.openModal = id => document.getElementById(id).classList.add('open');
+window.closeModal = id => document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ── Init ───────────────────────────────────────────────
+document.getElementById('e-date').value = today();
+document.getElementById('i-date').value = today();
+</script>
+</body>
+</html>
